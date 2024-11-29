@@ -4,3 +4,6 @@
 zig-out/
 tools/
 .DS_Store
+
+# I keep my scraches and testing stuff here
+dev/

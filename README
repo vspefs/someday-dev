@@ -1,0 +1,59 @@
+someday: a C/C++ package managing extension for Zig Build System
+
+still in early development. proof-of-concept stage.
+
+----
+current progress, 2020/11/29
+
+1. someday can already be consumed correctly by zig build system in 'build.zig.zon' files.
+
+2. use `@import("someday")` to get access to someday exported module.
+   this is currently impossible to do in a 'build.zig'. all we can do now is to test building CMake/Ninja and invoking them in a raw way, in a Zig Build System project's source file.
+
+3. tools including CMake, Ninja, and Zig toolchain for C/C++ are placed in the same folder where the someday package source is.
+   --- some_folder --- build.zig (of someday)
+                    |- build.zig.zon
+                    |
+                    |- src - ...
+                    |- deps - ...
+                    |
+                    |- tools - where those tools would be placed
+
+4. `someday.getConfig()`
+   it returns specific configurations for each project. it is necessary, as it contains all paths someday needs, some of which are relative to the project's root folder (used for project-specific C/C++ package building cache, etc).
+   or maybe it's not needed. we'll see.
+   `someday.setupZigTools()`
+   it sets up Zig toolchain for C/C++ in someday's global 'tools' folder, and returns a `std.process.EnvMap` containing all environment variables needed for someday internal invocations to work.
+   it's safe to be called multiple times, at any place.
+   internal function. exposed for testing.
+   `someday.buildCMake()`
+   builds CMake. build cache and installed binaries are placed in someday's global 'tools' folder.
+   it's safe to be called multiple times, at any place.
+   `someday.buildNinja()`
+   builds Ninja. build cache and installed binaries are placed in someday's global 'tools' folder.
+   it's safe to be called multiple times, at any place.
+
+   I'll leave a example that tells someday to build CMake and Ninja here:
+
+```zig
+const std = @import("std");
+const someday = @import("someday");
+
+pub fn main() !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    const config = try someday.getConfig(allocator);
+    try someday.setupZigTools(allocator, config);
+    try someday.buildCMake(allocator, config);
+    try someday.buildNinja(allocator, config);
+}
+```
+
+5. the memory management is shit. because I simply don't want to do it. 
+   just use `std.heap.ArenaAllocator` for everything and `deinit()` it in the end. will fix it later.
+
+6. I hardcoded things like "--parallel=12", again because I'm being lazy. will fix it later.
+
+----

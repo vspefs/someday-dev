@@ -1,0 +1,16 @@
+[ ] Find a way to allow the usage of someday in build.zig
+
+[-] CMake
+    [+] Build CMake from source in GNU environments
+    [ ] Download CMake binaries in Windows environment
+[+] Build Ninja
+[ ] Build Meson
+[ ] Build Xmake
+[ ] Build Bazel
+[ ] Support Conan
+[ ] Support Xmake packages
+[ ] Support vcpkg in Windows environment
+
+FIXME
+[ ] `zig cc` and `zig c++` can't build CMake
+[ ] `zig cc` and `zig c++` can't build Ninja

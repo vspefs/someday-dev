@@ -1,7 +1,7 @@
 .vscode/
 .idea/
-.zig-cache/
-zig-out/
+.zig-cache
+zig-out
 tools/
 .DS_Store
 

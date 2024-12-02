@@ -3,7 +3,32 @@ someday: a C/C++ package managing extension for Zig Build System
 still in early development. proof-of-concept stage.
 
 ----
-current progress, 2020/11/29
+current progress, 2024/12/02
+
+it was silly of me. after checking out Zig compiler's source, I finally found out that in your 'build.zig', you can just `@import()` your dependency's 'build.zig' file.
+
+this makes things extremely simple. so this time we're having our first working version of someday here. check out the 'example' folder for more information.
+
+however, for now, this is just a "try it out" version. I think we still have a few things to do before a serious release.
+
+1. clean up the shitty memory management.
+
+2. custom build args for packages.
+
+3. avoid rebuilding packages. in a better way, i mean.
+
+4. optimize the whole process. better logging, etc. (to be exact, refactor my rather draft-y code)
+
+4. a few more build system support, maybe?
+
+I just added them to 'TODO'. also, we'll have to settle this question:
+
+5. now when the content of 'build.zig' changes, even if everything about the package is the same, the package will still be rebuilt. it's not necessarily bad, and as a matter of fact, it seems to be a proper Zig Build System feature.
+   however, it does make things like global cache of packages more complex and difficult. it might seem nothing when we're cloning a package from a git repo, but if we're to download packages from a package management server, it might cause problems.
+   what to do?
+
+----
+current progress, 2024/11/29
 
 1. someday can already be consumed correctly by zig build system in 'build.zig.zon' files.
 

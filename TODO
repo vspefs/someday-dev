@@ -1,4 +1,12 @@
-[ ] Find a way to allow the usage of someday in build.zig
+[+] Find a way to allow the usage of someday in build.zig
+
+[ ] clean up the shitty memory management
+
+[ ] user-defined build args for packages
+
+[ ] avoid rebuilding packages in a better way
+
+[ ] quality of life improvements
 
 [-] CMake
     [+] Build CMake from source in GNU environments
@@ -7,9 +15,13 @@
 [ ] Build Meson
 [ ] Build Xmake
 [ ] Build Bazel
+[ ] Build build2
+[ ] Build gn
+[ ] Build b2
 [ ] Support Conan
 [ ] Support Xmake packages
-[ ] Support vcpkg in Windows environment
+[ ] Support build2/cppget.org packages
+[ ] Support vcpkg
 
 FIXME
 [ ] `zig cc` and `zig c++` can't build CMake

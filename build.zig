@@ -266,7 +266,7 @@ pub fn addCMakePackage(alloc: std.mem.Allocator, options: CMakePackageOptions) !
 
     const m = tc.createModule();
     m.addLibraryPath(try install_path.join(alloc, try std.fs.path.join(alloc, &.{"lib"})));
-    m.linkSystemLibrary("SDL3", .{
+    m.linkSystemLibrary(options.name, .{
         .needed = true,
         .preferred_link_mode = .dynamic,
         .search_strategy = .paths_first,

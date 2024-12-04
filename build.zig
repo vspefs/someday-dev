@@ -30,9 +30,9 @@ pub const Config = struct {
         errdefer alloc.free(tools_build_path);
         const tools_install_path = try std.fs.path.join(alloc, &.{ someday_build_root, "tools", "sysenv" });
         errdefer alloc.free(tools_install_path);
-        const cmake_src_path = try std.fs.path.join(alloc, &.{ someday_build_root, "deps", "cmake" });
+        const cmake_src_path = try someday_b.dependency("cmake", .{}).builder.build_root.handle.realpathAlloc(alloc, ".");
         errdefer alloc.free(cmake_src_path);
-        const ninja_src_path = try std.fs.path.join(alloc, &.{ someday_build_root, "deps", "ninja" });
+        const ninja_src_path = try someday_b.dependency("ninja", .{}).builder.build_root.handle.realpathAlloc(alloc, ".");
         errdefer alloc.free(ninja_src_path);
 
         var root_dir = try std.fs.openDirAbsolute(someday_build_root, .{});

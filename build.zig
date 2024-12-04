@@ -34,8 +34,8 @@ pub const Config = struct {
             .tools_build_path = try std.fs.path.join(alloc, &.{ someday_build_root, "tools", "build" }),
             .tools_install_path = try std.fs.path.join(alloc, &.{ someday_build_root, "tools", "sysenv" }),
             .tools_path = try std.fs.path.join(alloc, &.{ someday_build_root, "tools" }),
-            .cmake_src_path = try std.fs.path.join(alloc, &.{ someday_build_root, "deps", "cmake" }),
-            .ninja_src_path = try std.fs.path.join(alloc, &.{ someday_build_root, "deps", "ninja" }),
+            .cmake_src_path = try someday_b.dependency("cmake", .{}).builder.build_root.handle.realpathAlloc(alloc, "."),
+            .ninja_src_path = try someday_b.dependency("ninja", .{}).builder.build_root.handle.realpathAlloc(alloc, "."),
         };
     }
     pub fn deinit(self: *Config) void {

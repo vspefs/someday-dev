@@ -1,9 +1,3 @@
-[submodule "deps/cmake"]
-	path = deps/cmake
-	url = https://gitlab.kitware.com/cmake/cmake.git
-[submodule "deps/ninja"]
-	path = deps/ninja
-	url = https://github.com/ninja-build/ninja.git
 [submodule "example/deps/sdl3"]
 	path = example/deps/sdl3
 	url = https://github.com/libsdl-org/SDL.git

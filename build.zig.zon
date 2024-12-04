@@ -3,12 +3,19 @@
 
     .version = "0.0.0",
 
-    .dependencies = .{},
+    .dependencies = .{
+        .ninja = .{
+            .url = "git+https://github.com/ninja-build/ninja.git#d79d8f715346d49c95b734f0cb0d5c85bb57ffd6",
+            .hash = "122005472bccec33d5cb3379ccad59494cd74f10ef74d1e92e26b065afda36234296",
+        },
+        .cmake = .{
+            .url = "git+https://gitlab.kitware.com/cmake/cmake.git#6a5d305558467c97c1bace47fe8c27542d7b81ff",
+            .hash = "1220315b4455a1cc377213d2718d3c68035bb8be8a1ce92b3a8d4685edb7e56a311e",
+        },
+    },
 
     .paths = .{
         "build.zig",
         "build.zig.zon",
-        "src",
-        "deps",
     },
 }

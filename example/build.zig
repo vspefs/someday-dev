@@ -8,30 +8,32 @@ pub fn build(b: *std.Build) !void {
 
     var config = try someday.Config.init(alloc, b.dependency("someday", .{}).builder);
     defer config.deinit();
-    try someday.buildCMake(alloc, config);
-    try someday.buildNinja(alloc, config);
+    try config.buildCMake(12);
+    try config.buildNinja(12);
 
-    const sdl3 = try someday.addCMakePackage(alloc, .{
+    var profile = try someday.Profile.init(.{
+        .parallel_jobs = 12,
+        .config = &config,
+        .use_system_toolchain = true,
+        .use_system_cmake = false,
+        .use_system_ninja = false,
+    });
+    defer profile.deinit();
+
+    const sdl3 = try someday.addCMakePackage(.{
+        .profile = &profile,
         .builder = b,
-        .config = config,
-        .name = "SDL3",
-        .header = "SDL3/SDL.h",
+        .header_name = "SDL3/SDL.h",
+        .lib_name = "SDL3",
         .path = b.path("deps/sdl3/"),
     });
 
     const exe = b.addExecutable(.{
-        .target = b.standardTargetOptions(.{}),
-        .optimize = b.standardOptimizeOption(.{}),
-        .name = "someday-dev",
+        .name = "dev",
+        .optimize = .Debug,
+        .target = b.host,
         .root_source_file = b.path("src/main.zig"),
     });
     exe.root_module.addImport("sdl3", sdl3);
-    b.default_step.dependOn(&exe.step);
     b.installArtifact(exe);
-
-    const run = b.addRunArtifact(exe);
-    run.step.dependOn(&exe.step);
-
-    const step = b.step("run", "run the test code");
-    step.dependOn(&run.step);
 }

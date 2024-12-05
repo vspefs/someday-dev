@@ -30,10 +30,10 @@ pub const Config = struct {
         errdefer alloc.free(tools_build_path);
         const tools_install_path = try std.fs.path.join(alloc, &.{ someday_build_root, "tools", "sysenv" });
         errdefer alloc.free(tools_install_path);
-        //FIXME const cmake_src_path = try std.fs.path.join(alloc, &.{ someday_build_root, "deps", "cmake" });
-        //FIXME errdefer alloc.free(cmake_src_path);
-        //FIXME const ninja_src_path = try std.fs.path.join(alloc, &.{ someday_build_root, "deps", "ninja" });
-        //FIXME errdefer alloc.free(ninja_src_path);
+        const cmake_src_path = try std.fs.path.join(alloc, &.{ someday_build_root, "deps", "cmake" });
+        errdefer alloc.free(cmake_src_path);
+        const ninja_src_path = try std.fs.path.join(alloc, &.{ someday_build_root, "deps", "ninja" });
+        errdefer alloc.free(ninja_src_path);
 
         var root_dir = try std.fs.openDirAbsolute(someday_build_root, .{});
         try root_dir.makePath(tools_path);
@@ -47,11 +47,11 @@ pub const Config = struct {
         return Config{
             .allocator = alloc,
             .someday_build_root = someday_build_root,
-            .tools_build_path = try std.fs.path.join(alloc, &.{ someday_build_root, "tools", "build" }),
-            .tools_install_path = try std.fs.path.join(alloc, &.{ someday_build_root, "tools", "sysenv" }),
-            .tools_path = try std.fs.path.join(alloc, &.{ someday_build_root, "tools" }),
-            .cmake_src_path = try someday_b.dependency("cmake", .{}).builder.build_root.handle.realpathAlloc(alloc, "."),
-            .ninja_src_path = try someday_b.dependency("ninja", .{}).builder.build_root.handle.realpathAlloc(alloc, "."),
+            .tools_build_path = tools_build_path,
+            .tools_install_path = tools_install_path,
+            .tools_path = tools_path,
+            .cmake_src_path = cmake_src_path,
+            .ninja_src_path = ninja_src_path,
         };
     }
     pub fn deinit(self: *Config) void {
@@ -59,8 +59,8 @@ pub const Config = struct {
         self.allocator.free(self.tools_build_path);
         self.allocator.free(self.tools_install_path);
         self.allocator.free(self.tools_path);
-        //FIXME self.allocator.free(self.cmake_src_path);
-        //FIXME self.allocator.free(self.ninja_src_path);
+        self.allocator.free(self.cmake_src_path);
+        self.allocator.free(self.ninja_src_path);
     }
 
     pub fn buildCMake(self: *Config, parallel_jobs: u8) !void {

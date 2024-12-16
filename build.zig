@@ -83,8 +83,9 @@ pub const Config = struct {
 
         var cmd0 = std.process.Child.init(&.{
             try std.fs.path.join(alloc, &.{ self.cmake_src_path, "bootstrap" }),
-            try std.mem.concat(alloc, u8, &.{ "--prefix=", self.tools_install_path }),
+            "--prefix=/",
             try std.fmt.allocPrint(alloc, "--parallel={d}", .{parallel_jobs}),
+            "--datadir=/share/cmake",
         }, alloc);
         cmd0.cwd_dir = build_dir;
         cmd0.env_map = &env;
@@ -100,6 +101,7 @@ pub const Config = struct {
 
         var cmd2 = std.process.Child.init(&.{
             "make",
+            try std.mem.concat(alloc, u8, &.{ "DESTDIR=", self.tools_install_path }),
             "install",
         }, alloc);
         cmd2.cwd_dir = build_dir;
@@ -132,6 +134,7 @@ pub const Config = struct {
             self.ninja_src_path,
             try std.mem.concat(alloc, u8, &.{ "-DCMAKE_INSTALL_PREFIX=", self.tools_install_path }),
             "-DCMAKE_BUILD_TYPE=Release",
+            "-DBUILD_TESTING=OFF",
         }, alloc);
         cmd0.cwd_dir = build_dir;
         cmd0.env_map = &env;
@@ -291,14 +294,11 @@ pub const Config = struct {
         var dir = try std.fs.openDirAbsolute(to, .{});
         defer dir.close();
 
-        try dir.writeFile(.{ .sub_path = "cmake", .data = try std.fmt.allocPrint(alloc,
-            \\#!/bin/bash
-            \\{s} "$@"
-        , .{try std.fs.path.join(alloc, &.{ self.tools_install_path, "bin", "cmake" })}) });
+        dir.symLink(try std.fs.path.join(alloc, &.{ self.tools_install_path, "bin", "cmake" }), "cmake", .{}) catch |err| if (err == error.PathAlreadyExists) {} else return err;
 
-        var ar = try dir.openFile("cmake", .{});
-        try ar.chmod(0o777);
-        ar.close();
+        var cmake = try dir.openFile("cmake", .{});
+        try cmake.chmod(0o777);
+        cmake.close();
     }
     pub fn setNinja(self: *const Config, to: []const u8) !void {
         var arena = std.heap.ArenaAllocator.init(self.allocator);
@@ -307,28 +307,25 @@ pub const Config = struct {
         var dir = try std.fs.openDirAbsolute(to, .{});
         defer dir.close();
 
-        try dir.writeFile(.{ .sub_path = "ninja", .data = try std.fmt.allocPrint(alloc,
-            \\#!/bin/bash
-            \\{s} "$@"
-        , .{try std.fs.path.join(alloc, &.{ self.tools_install_path, "bin", "ninja" })}) });
+        dir.symLink(try std.fs.path.join(alloc, &.{ self.tools_install_path, "bin", "ninja" }), "ninja", .{}) catch |err| if (err == error.PathAlreadyExists) {} else return err;
 
-        var ar = try dir.openFile("ninja", .{});
-        try ar.chmod(0o777);
-        ar.close();
+        var ninja = try dir.openFile("ninja", .{});
+        try ninja.chmod(0o777);
+        ninja.close();
     }
 };
 
 pub const Profile = struct {
     pub const Options = struct {
         parallel_jobs: ?u8 = null,
-        config: *const Config,
+        config: *Config,
         use_system_toolchain: bool = false,
         use_system_cmake: bool = false,
         use_system_ninja: bool = false,
     };
 
     parallel_jobs: ?u8,
-    config: *const Config,
+    config: *Config,
 
     use_system_toolchain: bool,
     use_system_cmake: bool,
@@ -337,9 +334,9 @@ pub const Profile = struct {
     env_dir: std.fs.Dir,
 
     pub fn init(options: Options) !Profile {
-        var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+        var arena = std.heap.ArenaAllocator.init(options.config.allocator);
         defer arena.deinit();
-        const allocator = arena.allocator();
+        const alloc = arena.allocator();
 
         const hash_int = blk: {
             var int: u8 = 0;
@@ -349,11 +346,11 @@ pub const Profile = struct {
             int += (if (options.use_system_toolchain) 1 else 0);
             break :blk int;
         };
-        const profile_hash = try std.fmt.allocPrint(allocator, "{d}", .{hash_int});
+        const profile_hash = try std.fmt.allocPrint(alloc, "{d}", .{hash_int});
 
         var root = try std.fs.openDirAbsolute(options.config.tools_path, .{});
         const profile_dir = try root.makeOpenPath(profile_hash, .{});
-        const profile_path = try profile_dir.realpathAlloc(allocator, ".");
+        const profile_path = try profile_dir.realpathAlloc(alloc, ".");
         root.close();
 
         if (!options.use_system_toolchain) try options.config.setZig(profile_path);
@@ -373,70 +370,104 @@ pub const Profile = struct {
         self.env_dir.close();
     }
 
-    pub fn getEnvMap(self: *Profile, alloc: std.mem.Allocator) !std.process.EnvMap {
-        var env = try std.process.getEnvMap(alloc);
-        errdefer env.deinit();
+    /// Set the environment map according to the profile.
+    ///
+    /// `some_run.env_map = &some_env_map;` does not work because `some_env_map` we get in build.zig does not live long enough.
+    /// And I can't find any std.Build function that dupes the map.
+    pub fn setEnvMap(self: *Profile, to: *std.Build.Step.Run) !void {
+        var arena = std.heap.ArenaAllocator.init(self.config.allocator);
+        defer arena.deinit();
+        const alloc = arena.allocator();
 
-        try env.put("PATH", try std.fmt.allocPrint(alloc, "{s}:{s}", .{
-            try self.env_dir.realpathAlloc(alloc, "."),
-            env.get("PATH") orelse "",
-        }));
+        const old_path = blk: {
+            var env = try std.process.getEnvMap(alloc);
+            defer env.deinit();
+            break :blk try alloc.dupe(u8, env.get("PATH") orelse "");
+        };
+        const new_path = try std.fmt.allocPrint(alloc, "{s}:{s}", .{ try self.env_dir.realpathAlloc(alloc, "."), old_path });
+        to.setEnvironmentVariable("PATH", new_path);
+
         if (!self.use_system_toolchain) {
-            try env.put("CC", try self.env_dir.realpathAlloc(alloc, "cc"));
-            try env.put("CXX", try self.env_dir.realpathAlloc(alloc, "c++"));
+            const cc_path = try self.env_dir.realpathAlloc(alloc, "cc");
+            const cxx_path = try self.env_dir.realpathAlloc(alloc, "c++");
+            to.setEnvironmentVariable("CC", cc_path);
+            to.setEnvironmentVariable("CXX", cxx_path);
         }
+    }
+};
 
-        return env;
+pub const PackagePathTag = enum {
+    lazy_path,
+    absolute,
+};
+
+pub const PackagePath = union(PackagePathTag) {
+    lazy_path: std.Build.LazyPath,
+    absolute: []const u8,
+
+    pub fn fromDependency(dep: *std.Build.Dependency) !PackagePath {
+        return .{ .lazy_path = dep.path(".") };
+    }
+    pub fn fromTree(path: std.Build.LazyPath) !PackagePath {
+        return .{ .lazy_path = path };
     }
 };
 
 pub const CMakePackageOptions = struct {
     builder: *std.Build,
     profile: *Profile,
-    lib_name: []const u8,
-    header_name: []const u8,
-    path: std.Build.LazyPath,
+    path: PackagePath,
+    build_as: []const u8,
 };
 
-pub fn addCMakePackage(options: CMakePackageOptions) !*std.Build.Module {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+pub const CMakePackageCppOptions = struct {};
+
+pub const CMakePackage = struct {
+    include_path: std.Build.LazyPath,
+    library_path: std.Build.LazyPath,
+    step: *std.Build.Step,
+};
+
+pub fn addCMakePackage(options: CMakePackageOptions) !CMakePackage {
+    var arena = std.heap.ArenaAllocator.init(options.profile.config.allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
-    var env = try options.profile.getEnvMap(alloc);
-    defer env.deinit();
 
-    const cmd0 = options.builder.addSystemCommand(&.{ "cmake", "-G", "Ninja", "-D", "CMAKE_BUILD_TYPE=Release" });
-    const install_path = cmd0.addPrefixedOutputDirectoryArg("-DCMAKE_INSTALL_PREFIX=", try std.fs.path.join(alloc, &.{ "someday", "sysenv" }));
-    cmd0.addPrefixedDirectoryArg("-S", options.path);
-    const build_path = cmd0.addPrefixedOutputDirectoryArg("-B", try std.fs.path.join(alloc, &.{ "someday", "build", options.lib_name }));
+    const cmd0 = options.builder.addSystemCommand(&.{
+        "cmake",
+        "-GNinja",
+        "-DCMAKE_BUILD_TYPE=Release",
+    });
+    const install_path = cmd0.addPrefixedOutputDirectoryArg("-DCMAKE_INSTALL_PREFIX=", "sysenv");
+    switch (options.path) {
+        .absolute => |path| cmd0.addArgs(&.{ "-S", path }),
+        .lazy_path => |path| cmd0.addPrefixedDirectoryArg("-S", path),
+    }
+    const build_path = cmd0.addPrefixedOutputDirectoryArg("-B", try std.fs.path.join(alloc, &.{ "build", options.build_as }));
+    try options.profile.setEnvMap(cmd0);
 
-    const cmd1 = options.builder.addSystemCommand(&.{"cmake"});
-    cmd1.addArg("--build");
+    const cmd1 = options.builder.addSystemCommand(&.{
+        "cmake",
+        "--build",
+    });
     cmd1.addDirectoryArg(build_path);
-
-    const cmd2 = options.builder.addSystemCommand(&.{"cmake"});
-    cmd2.addArg("--install");
-    cmd2.addDirectoryArg(build_path);
-
-    const tc = options.builder.addTranslateC(.{
-        .link_libc = true,
-        .optimize = .ReleaseSafe,
-        .target = options.builder.host,
-        .root_source_file = try install_path.join(alloc, try std.fs.path.join(alloc, &.{ "include", options.header_name })),
-    });
-    tc.addIncludePath(try install_path.join(alloc, try std.fs.path.join(alloc, &.{"include"})));
-
-    const m = tc.createModule();
-    m.addLibraryPath(try install_path.join(alloc, try std.fs.path.join(alloc, &.{"lib"})));
-    m.linkSystemLibrary(options.lib_name, .{
-        .needed = true,
-        .preferred_link_mode = .static,
-        .search_strategy = .paths_first,
-    });
-
+    try options.profile.setEnvMap(cmd1);
     cmd1.step.dependOn(&cmd0.step);
-    cmd2.step.dependOn(&cmd1.step);
-    tc.step.dependOn(&cmd2.step);
 
-    return m;
+    const cmd2 = options.builder.addSystemCommand(&.{
+        "cmake",
+        "--install",
+    });
+    cmd2.addDirectoryArg(build_path);
+    try options.profile.setEnvMap(cmd2);
+    cmd2.step.dependOn(&cmd1.step);
+
+    const include_path = install_path.path(options.builder, "include");
+    const library_path = install_path.path(options.builder, "lib");
+
+    return .{
+        .include_path = include_path,
+        .library_path = library_path,
+        .step = &cmd2.step,
+    };
 }

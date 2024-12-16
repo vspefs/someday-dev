@@ -1,6 +1,6 @@
 [+] Find a way to allow the usage of someday in build.zig
 
-[ ] clean up the shitty memory management
+[+] clean up the shitty memory management
 
 [ ] user-defined build args for packages
 
@@ -24,5 +24,4 @@
 [ ] Support vcpkg
 
 FIXME
-[ ] `zig cc` and `zig c++` can't build CMake
-[ ] `zig cc` and `zig c++` can't build Ninja
+[ ] `zig cc` and `zig c++` don't support certain linker flags

@@ -1,5 +1,5 @@
 .{
-    .name = "someday-example",
+    .name = "someday-dev-scratches",
 
     .version = "0.0.0",
 
@@ -7,6 +7,10 @@
         .someday = .{
             .path = "../",
             .lazy = false,
+        },
+        .sdl3 = .{
+            .url = "git+https://github.com/libsdl-org/SDL.git#6cc9ce183d904489bf8e33e26b91d6012667e1b0",
+            .hash = "122023bcbcb680721079ad2747e81d9a50e84992721d541645f89f64045eef4e26ae",
         },
     },
 

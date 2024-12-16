@@ -3,6 +3,18 @@ someday: a C/C++ package managing extension for Zig Build System
 still in early development. proof-of-concept stage.
 
 ----
+current progress, 2024/12/17
+happy christmas or just another day, depending on your culture!
+
+been working on the whole dependency and profile stuff for a while, but only until now am I able to deliver a working commit. real life issues plus my noob skill issues, sorry.
+
+Usage of Zig's dependency is pretty much working, while profile and more package customization is still in progress. the way to add a package to a Zig `std.Build.Step.Compile` or to use it for other purposes needs optimization, too. Internal logic could use some refinement. Still need to figure out (if we can) how to make Zig C/C++ linker work properly and independently.
+
+but it's functional! and code quality leaps from 'bad' to 'just-so-so'.
+
+oh, besides, I found myself suck at using git. I'm not sorry because it's, as you can see, a draft repo. I'll learn how to git someday. (it's not a pun because if it is it's a bad pun)
+
+----
 current progress, 2024/12/02
 
 it was silly of me. after checking out Zig compiler's source, I finally found out that in your 'build.zig', you can just `@import()` your dependency's 'build.zig' file.

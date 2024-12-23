@@ -12,6 +12,10 @@
             .url = "git+https://gitlab.kitware.com/cmake/cmake.git#6a5d305558467c97c1bace47fe8c27542d7b81ff",
             .hash = "1220315b4455a1cc377213d2718d3c68035bb8be8a1ce92b3a8d4685edb7e56a311e",
         },
+        .tellme = .{
+            .url = "git+https://github.com/vspefs/tellme-dev#6e2c29dfb1c803780698fd27f124865dd2b62861",
+            .hash = "1220ec54fdfe1b54962e76cb5d94a76c4d3bb0df8f4826f709634e14b840e32f20fa",
+        },
     },
 
     .paths = .{

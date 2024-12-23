@@ -1,5 +1,5 @@
 .{
-    .name = "someday-dev-scratches",
+    .name = "someday-example",
 
     .version = "0.0.0",
 

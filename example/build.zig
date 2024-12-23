@@ -17,35 +17,30 @@ pub fn build(b: *std.Build) !void {
         .use_system_ninja = false,
     });
 
-    const sdl3_p = try someday.addCMakePackage(.{
+    const sdl3_package = try someday.addCMakePackage(.{
         .build_as = "sdl3",
         .builder = b,
         .profile = &profile,
         .path = try someday.PackagePath.fromDependency(b.dependency("sdl3", .{})),
     });
-
-    const sdl3 = b.addTranslateC(.{
+    const sdl3_m = someday.createModuleFrom(sdl3_package, .{
+        .builder = b,
+        .include_path = "SDL3/SDL.h",
         .link_libc = true,
-        .optimize = optimize,
-        .root_source_file = sdl3_p.include_path.path(b, "SDL3/SDL.h"),
         .target = target,
+        .optimize = optimize,
     });
-    sdl3.addIncludePath(sdl3_p.include_path);
 
     const exe = b.addExecutable(.{
-        .name = "dev",
+        .name = "someday-example",
         .optimize = optimize,
         .target = target,
         .root_source_file = b.path("src/main.zig"),
     });
-    exe.root_module.addImport("sdl3", sdl3.createModule());
-    exe.addLibraryPath(sdl3_p.library_path);
-    exe.linkSystemLibrary2("SDL3", .{
-        .weak = false,
-        .search_strategy = .no_fallback,
-        .needed = true,
+    exe.root_module.addImport("sdl3", sdl3_m);
+    someday.linkPackage(exe, sdl3_package, &.{.{
+        .name = "SDL3",
         .preferred_link_mode = .dynamic,
-    });
-    sdl3.step.dependOn(sdl3_p.step);
+    }});
     b.installArtifact(exe);
 }

@@ -419,10 +419,10 @@ pub const Package = struct {
     step: tellme.a.FieldOf(*std.Build.Step),
 };
 
-pub fn includePackage(c: *std.Build.Step.Compile, pkg: anytype) void {
+pub fn includeHeadersFrom(pkg: anytype, to: *std.Build.Step.Compile) void {
     const p = tellme.that(&pkg, Package);
-    c.addIncludePath(p.include_path.*);
-    c.step.dependOn(pkg.step.*);
+    to.addIncludePath(p.include_path.*);
+    to.step.dependOn(p.step.*);
 }
 
 pub fn createModuleFrom(pkg: anytype, options: Package.CreateModuleOptions) *std.Build.Module {
@@ -439,11 +439,11 @@ pub fn createModuleFrom(pkg: anytype, options: Package.CreateModuleOptions) *std
     return tc.createModule();
 }
 
-pub fn linkPackage(c: *std.Build.Step.Compile, pkg: anytype, libraries: []const Package.LinkOptions) void {
+pub fn linkLibraryFrom(pkg: anytype, to: *std.Build.Step.Compile, libraries: []const Package.LinkOptions) void {
     const p = tellme.that(&pkg, Package);
-    c.addLibraryPath(p.library_path.*);
+    to.addLibraryPath(p.library_path.*);
     for (libraries) |library| {
-        c.linkSystemLibrary2(library.name, .{
+        to.linkSystemLibrary2(library.name, .{
             .needed = library.needed,
             .weak = library.weak,
             .use_pkg_config = library.use_pkg_config,
@@ -451,7 +451,7 @@ pub fn linkPackage(c: *std.Build.Step.Compile, pkg: anytype, libraries: []const 
             .search_strategy = library.search_strategy,
         });
     }
-    c.step.dependOn(p.step.*);
+    to.step.dependOn(p.step.*);
 }
 
 pub const PackagePathTag = enum {

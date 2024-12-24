@@ -23,13 +23,6 @@ pub fn build(b: *std.Build) !void {
         .profile = &profile,
         .path = try someday.PackagePath.fromDependency(b.dependency("sdl3", .{})),
     });
-    const sdl3_m = someday.createModuleFrom(sdl3_package, .{
-        .builder = b,
-        .include_path = "SDL3/SDL.h",
-        .link_libc = true,
-        .target = target,
-        .optimize = optimize,
-    });
 
     const exe = b.addExecutable(.{
         .name = "someday-example",
@@ -37,10 +30,35 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .root_source_file = b.path("src/main.zig"),
     });
-    exe.root_module.addImport("sdl3", sdl3_m);
-    someday.linkPackage(exe, sdl3_package, &.{.{
+
+    exe.root_module.addImport("sdl3", someday.createModuleFrom(sdl3_package, .{
+        .builder = b,
+        .include_path = "SDL3/SDL.h",
+        .link_libc = true,
+        .target = target,
+        .optimize = optimize,
+    }));
+    someday.linkLibraryFrom(sdl3_package, exe, &.{.{
         .name = "SDL3",
         .preferred_link_mode = .dynamic,
     }});
     b.installArtifact(exe);
+
+    const cpp = b.addExecutable(.{
+        .name = "someday-example-cpp",
+        .optimize = optimize,
+        .target = target,
+    });
+
+    cpp.linkLibCpp();
+    cpp.addCSourceFile(.{
+        .file = b.path("src/main.cpp"),
+        .flags = &.{"-std=c++26"},
+    });
+    someday.includeHeadersFrom(sdl3_package, cpp);
+    someday.linkLibraryFrom(sdl3_package, cpp, &.{.{
+        .name = "SDL3",
+        .preferred_link_mode = .dynamic,
+    }});
+    b.installArtifact(cpp);
 }

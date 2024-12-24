@@ -8,6 +8,8 @@
 
 [ ] quality of life improvements
 
+[ ] better error messages
+
 [-] CMake
     [+] Build CMake from source in GNU environments
     [ ] Download CMake binaries in Windows environment

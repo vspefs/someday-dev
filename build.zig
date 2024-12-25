@@ -395,6 +395,17 @@ pub const Profile = struct {
             to.setEnvironmentVariable("CXX", cxx_path);
         }
     }
+
+    pub fn getProfileHash(self: *const Profile, alloc: std.mem.Allocator) ![]const u8 {
+        return std.fmt.allocPrint(alloc, "{d}", .{hash: {
+            var int: u8 = 0;
+            int += (self.parallel_jobs orelse 0) * 10;
+            int += (if (self.use_system_cmake) 4 else 0);
+            int += (if (self.use_system_ninja) 2 else 0);
+            int += (if (self.use_system_toolchain) 1 else 0);
+            break :hash int;
+        }});
+    }
 };
 
 pub const Package = struct {
@@ -490,18 +501,28 @@ pub fn addCMakePackage(options: CMakePackageOptions) !CMakePackage {
     var arena = std.heap.ArenaAllocator.init(options.profile.config.allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
+    const profile_hash = try options.profile.getProfileHash(alloc);
 
     const cmd0 = options.builder.addSystemCommand(&.{
         "cmake",
         "-GNinja",
         "-DCMAKE_BUILD_TYPE=Release",
     });
-    const install_path = cmd0.addPrefixedOutputDirectoryArg("-DCMAKE_INSTALL_PREFIX=", "sysenv");
+    if (!options.profile.use_system_toolchain) {
+        cmd0.addArgs(&.{ "-DCMAKE_C_LINKER_DEPFILE_SUPPORTED=OFF", "-DCMAKE_CXX_LINKER_DEPFILE_SUPPORTED=OFF" });
+    }
+    const install_path = cmd0.addPrefixedOutputDirectoryArg(
+        "-DCMAKE_INSTALL_PREFIX=",
+        try std.fs.path.join(alloc, &.{ profile_hash, "sysenv" }),
+    );
     switch (options.path) {
         .absolute => |path| cmd0.addArgs(&.{ "-S", path }),
         .lazy_path => |path| cmd0.addPrefixedDirectoryArg("-S", path),
     }
-    const build_path = cmd0.addPrefixedOutputDirectoryArg("-B", try std.fs.path.join(alloc, &.{ "build", options.build_as }));
+    const build_path = cmd0.addPrefixedOutputDirectoryArg(
+        "-B",
+        try std.fs.path.join(alloc, &.{ profile_hash, "build", options.build_as }),
+    );
     try options.profile.setEnvMap(cmd0);
 
     const cmd1 = options.builder.addSystemCommand(&.{

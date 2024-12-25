@@ -8,12 +8,11 @@ pub fn build(b: *std.Build) !void {
     var config = try someday.Config.init(b.allocator, b.dependency("someday", .{}).builder);
     try config.buildCMake(12);
     try config.buildNinja(12);
-
     var profile = try someday.Profile.init(.{
         .parallel_jobs = 12,
         .config = &config,
         .use_system_cmake = false,
-        .use_system_toolchain = true,
+        .use_system_toolchain = false,
         .use_system_ninja = false,
     });
 

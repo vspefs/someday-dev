@@ -26,8 +26,4 @@
 [ ] Support vcpkg
 
 FIXME
-[-] `zig cc` and `zig c++` don't support certain linker flags
-    -- turns out it's CMake somehow not recognizing zig and not setting internal flags ( CMAKE_{C,CXX}_LINKER_DEPFILE_SUPPORTED ) right
-    -- manually set it and it's fine now
-    -- I'm lazy so CMake and Ninja are still not built by zig
-    -- would be fixed sooooooooon
+[+] `zig cc` and `zig c++` don't support certain linker flags

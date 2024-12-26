@@ -75,21 +75,28 @@ pub const Config = struct {
         }) {
             return;
         }
-        var env = try std.process.getEnvMap(alloc);
-        defer env.deinit();
+
         var build_root_dir = try std.fs.openDirAbsolute(self.tools_build_path, .{});
         var build_dir = try build_root_dir.makeOpenPath("cmake", .{});
         build_root_dir.close();
         defer build_dir.close();
 
+        try build_dir.writeFile(.{ .sub_path = "someday_cmake_cache.cmake", .data = 
+        \\set(CMAKE_C_LINKER_DEPFILE_SUPPORTED OFF CACHE BOOL "someday needs it, bro." FORCE)
+        \\set(CMAKE_CXX_LINKER_DEPFILE_SUPPORTED OFF CACHE BOOL "someday needs it, bro." FORCE)
+        });
+
         var cmd0 = std.process.Child.init(&.{
             try std.fs.path.join(alloc, &.{ self.cmake_src_path, "bootstrap" }),
-            "--prefix=/",
+            try std.fmt.allocPrint(alloc, "--prefix={s}", .{self.tools_install_path}),
             try std.fmt.allocPrint(alloc, "--parallel={d}", .{parallel_jobs}),
             "--datadir=/share/cmake",
+            "--init=./someday_cmake_cache.cmake",
+            try std.fmt.allocPrint(alloc, "CC={s}", .{try std.fs.path.join(alloc, &.{ self.tools_path, "cc" })}),
+            try std.fmt.allocPrint(alloc, "CXX={s}", .{try std.fs.path.join(alloc, &.{ self.tools_path, "c++" })}),
+            "CXXFLAGS=-fno-sanitize=undefined",
         }, alloc);
         cmd0.cwd_dir = build_dir;
-        cmd0.env_map = &env;
         _ = try cmd0.spawnAndWait();
 
         var cmd1 = std.process.Child.init(&.{
@@ -97,16 +104,13 @@ pub const Config = struct {
             try std.fmt.allocPrint(alloc, "--jobs={d}", .{parallel_jobs}),
         }, alloc);
         cmd1.cwd_dir = build_dir;
-        cmd1.env_map = &env;
         _ = try cmd1.spawnAndWait();
 
         var cmd2 = std.process.Child.init(&.{
             "make",
-            try std.mem.concat(alloc, u8, &.{ "DESTDIR=", self.tools_install_path }),
             "install",
         }, alloc);
         cmd2.cwd_dir = build_dir;
-        cmd2.env_map = &env;
         _ = try cmd2.spawnAndWait();
     }
     pub fn buildNinja(self: *Config, parallel_jobs: u8) !void {
@@ -133,9 +137,13 @@ pub const Config = struct {
             ".",
             "-S",
             self.ninja_src_path,
-            try std.mem.concat(alloc, u8, &.{ "-DCMAKE_INSTALL_PREFIX=", self.tools_install_path }),
+            try std.fmt.allocPrint(alloc, "-DCMAKE_INSTALL_PREFIX={s}", .{self.tools_install_path}),
             "-DCMAKE_BUILD_TYPE=Release",
             "-DBUILD_TESTING=OFF",
+            try std.fmt.allocPrint(alloc, "-DCMAKE_C_COMPILER={s}", .{try std.fs.path.join(alloc, &.{ self.tools_path, "cc" })}),
+            try std.fmt.allocPrint(alloc, "-DCMAKE_CXX_COMPILER={s}", .{try std.fs.path.join(alloc, &.{ self.tools_path, "c++" })}),
+            "-DCMAKE_C_LINKER_DEPFILE_SUPPORTED=OFF",
+            "-DCMAKE_CXX_LINKER_DEPFILE_SUPPORTED=OFF",
         }, alloc);
         cmd0.cwd_dir = build_dir;
         cmd0.env_map = &env;

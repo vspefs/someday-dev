@@ -37,10 +37,10 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     }));
-    someday.linkLibraryFrom(sdl3_package, exe, &.{.{
+    someday.linkLibraryFrom(sdl3_package, exe, .{
         .name = "SDL3",
         .preferred_link_mode = .dynamic,
-    }});
+    });
     b.installArtifact(exe);
 
     const cpp = b.addExecutable(.{
@@ -55,9 +55,9 @@ pub fn build(b: *std.Build) !void {
         .flags = &.{"-std=c++26"},
     });
     someday.includeHeadersFrom(sdl3_package, cpp);
-    someday.linkLibraryFrom(sdl3_package, cpp, &.{.{
+    someday.linkLibraryFrom(sdl3_package, cpp, .{
         .name = "SDL3",
         .preferred_link_mode = .dynamic,
-    }});
+    });
     b.installArtifact(cpp);
 }

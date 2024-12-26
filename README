@@ -3,6 +3,16 @@ someday: a C/C++ package managing extension for Zig Build System
 still in early development. proof-of-concept stage.
 
 ----
+current progress, 2024/12/26
+alright. someday is working. properly.
+
+my dream of "making Zig the one-stop solution to C/C++" is coming true. someday is now building CMake, Ninja, and CMake packages using only Zig toolchain and a standard GNU/Linux environment just right.
+
+the next step is to make it more user-friendly and add basic features. better logging, better error messages, user custom args, etc. we also have a generic package consuming support, which makes adding support for other build systems/package management systems really easy.
+
+let's say we should have a 1.0 release with a wide range of support before 2025.
+
+----
 current progress, 2024/12/17
 happy christmas or just another day, depending on your culture!
 

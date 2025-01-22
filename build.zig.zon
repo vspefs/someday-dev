@@ -4,17 +4,17 @@
     .version = "0.0.0",
 
     .dependencies = .{
-        .ninja = .{
-            .url = "git+https://github.com/ninja-build/ninja.git#d79d8f715346d49c95b734f0cb0d5c85bb57ffd6",
-            .hash = "122005472bccec33d5cb3379ccad59494cd74f10ef74d1e92e26b065afda36234296",
+        .tellme = .{
+            .url = "git+https://github.com/vspefs/tellme-dev.git#83724648e1cebaf8b862214d0daceef56ba44e1d",
+            .hash = "1220d611261e4407489929b810dd92552814d6139e9721550a79393717b962d99714",
         },
         .cmake = .{
-            .url = "git+https://gitlab.kitware.com/cmake/cmake.git#6a5d305558467c97c1bace47fe8c27542d7b81ff",
-            .hash = "1220315b4455a1cc377213d2718d3c68035bb8be8a1ce92b3a8d4685edb7e56a311e",
+            .url = "git+https://github.com/vspefs/cmake-bootstrapper.git#c445d89a991a67f0b51e730d334a0cfee8541a2e",
+            .hash = "1220f322a8a99a39f52581a962bc5a17e05e0a4f8af1f16aee9a4d463ef02aef6144",
         },
-        .tellme = .{
-            .url = "git+https://github.com/vspefs/tellme-dev#6e2c29dfb1c803780698fd27f124865dd2b62861",
-            .hash = "1220ec54fdfe1b54962e76cb5d94a76c4d3bb0df8f4826f709634e14b840e32f20fa",
+        .ninja = .{
+            .url = "git+https://github.com/vspefs/cmake-bootstrapper.git#7220f42366cbd621f4f96adddf8624c46752d0b0",
+            .hash = "1220c422e71702d0886b30713f52a437717574007560bced962c16399b7bc72332eb",
         },
     },
 

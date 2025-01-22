@@ -5,15 +5,13 @@
 
     .dependencies = .{
         .someday = .{
-            .path = "../",
-            .lazy = false,
+            .path = "..",
         },
         .sdl3 = .{
-            .url = "git+https://github.com/libsdl-org/SDL.git#6cc9ce183d904489bf8e33e26b91d6012667e1b0",
-            .hash = "122023bcbcb680721079ad2747e81d9a50e84992721d541645f89f64045eef4e26ae",
+            .path = "git+https://github.com/libsdl-org/SDL.git#73fc2b03a3b398243c5131fc5c7624b610d73e2d",
+            .hash = "12203848af478fa6e9e7c27997250d626aebc62f8be13acfbe3d26011c83bf9134b7",
         },
     },
-
     .paths = .{
         "build.zig",
         "build.zig.zon",

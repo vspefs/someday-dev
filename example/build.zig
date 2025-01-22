@@ -1,63 +1,55 @@
-const std = @import("std");
-const someday = @import("someday");
-
 pub fn build(b: *std.Build) !void {
-    const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
+    var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
+    defer if (gpa.deinit() == .leak) @panic("memory leak!");
 
-    var config = try someday.Config.init(b.allocator, b.dependency("someday", .{}).builder);
-    try config.buildCMake(12);
-    try config.buildNinja(12);
+    const alloc = gpa.allocator();
+
+    var config = try someday.Config.init(alloc, b.dependency("someday", .{}));
+    defer config.deinit();
+
     var profile = try someday.Profile.init(.{
-        .parallel_jobs = 12,
         .config = &config,
-        .use_system_cmake = false,
-        .use_system_toolchain = false,
-        .use_system_ninja = false,
+        .parallel_jobs = 12,
+        .usage = .{
+            .cmake = .someday,
+            .ninja = .someday,
+            .toolchain = .zig,
+        },
     });
+    defer profile.deinit();
 
-    const sdl3_package = try someday.addCMakePackage(.{
-        .build_as = "sdl3",
-        .builder = b,
+    var sdl3 = try someday.CMakePackage.init(.{
+        .build_name = "sdl3",
         .profile = &profile,
         .path = try someday.PackagePath.fromDependency(b.dependency("sdl3", .{})),
+        .builder = b,
     });
+    defer sdl3.build();
+
+    try sdl3.cache.put("CMAKE_BUILD_TYPE", .{ .type = .string, .value = "Release" });
+
+    const mod = b.createModule(.{
+        .target = b.standardTargetOptions(.{}),
+        .optimize = b.standardOptimizeOption(.{}),
+        .link_libcpp = true,
+    });
+    mod.addCSourceFile(.{ .file = b.path("src/main.cpp") });
 
     const exe = b.addExecutable(.{
-        .name = "someday-example",
-        .optimize = optimize,
-        .target = target,
-        .root_source_file = b.path("src/main.zig"),
+        .name = "exe",
+        .root_module = mod,
     });
 
-    exe.root_module.addImport("sdl3", someday.createModuleFrom(sdl3_package, .{
-        .builder = b,
-        .include_path = "SDL3/SDL.h",
-        .link_libc = true,
-        .target = target,
-        .optimize = optimize,
-    }));
-    someday.linkLibraryFrom(sdl3_package, exe, .{
+    someday.linkLibraryFrom(sdl3, exe, .{
         .name = "SDL3",
         .preferred_link_mode = .dynamic,
     });
-    b.installArtifact(exe);
+    someday.includeHeadersFrom(sdl3, exe);
 
-    const cpp = b.addExecutable(.{
-        .name = "someday-example-cpp",
-        .optimize = optimize,
-        .target = target,
-    });
-
-    cpp.linkLibCpp();
-    cpp.addCSourceFile(.{
-        .file = b.path("src/main.cpp"),
-        .flags = &.{"-std=c++26"},
-    });
-    someday.includeHeadersFrom(sdl3_package, cpp);
-    someday.linkLibraryFrom(sdl3_package, cpp, .{
-        .name = "SDL3",
-        .preferred_link_mode = .dynamic,
-    });
-    b.installArtifact(cpp);
+    const run = b.addRunArtifact(exe);
+    const step = b.step("run", "");
+    step.dependOn(&run.step);
 }
+
+const std = @import("std");
+const someday = @import("someday");

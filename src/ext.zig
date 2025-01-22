@@ -1,1 +1,1 @@
-pub usingnamespace @import("ext/cmake.zig");
+pub const CMakePackage = @import("ext/CMakePackage.zig");

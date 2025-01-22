@@ -2,7 +2,7 @@
 
 [+] clean up the shitty memory management
 
-[ ] user-defined build args for packages
+[-] user-defined build args for packages
 
 [ ] avoid rebuilding packages in a better way
 
@@ -10,9 +10,7 @@
 
 [ ] better error messages
 
-[-] CMake
-    [+] Build CMake from source in GNU environments
-    [ ] Download CMake binaries in Windows environment
+[+] Build CMake
 [+] Build Ninja
 [ ] Build Meson
 [ ] Build Xmake

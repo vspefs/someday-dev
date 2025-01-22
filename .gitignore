@@ -2,8 +2,13 @@
 .idea
 .zig-cache
 zig-out
-tools/
 .DS_Store
+
+# sorry but it's convinence to have a standalone folder for someday
+.someday/
+
+# CMake log or something. Too lazy to get rid of it, sorry.
+-
 
 # I keep my scraches and testing stuff here
 dev/

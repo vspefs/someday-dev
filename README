@@ -3,6 +3,14 @@ someday: a C/C++ package managing extension for Zig Build System
 still in early development. proof-of-concept stage.
 
 ----
+current progress, 2025/1/22
+to have something fancy buy not really so useful that is the ability to bootstrap a whole C/C++ development environment with only Zig toolchain, I spent some time bootstrapping CMake and Ninja with Zig. and it worked.
+
+then after quite a long while, until now, I finally integrated them into someday, and refactored the project itself a little. looks pretty good.
+
+the base is pretty solid and now it's building up the blocks. I genuinely hope we can have a 1.0 release this month.
+
+----
 current progress, 2024/12/26
 alright. someday is working. properly.
 

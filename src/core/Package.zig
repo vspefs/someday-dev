@@ -10,7 +10,7 @@ pub const Package = struct {
         preferred_link_mode: std.builtin.LinkMode = .dynamic,
         search_strategy: std.Build.Module.SystemLib.SearchStrategy = .no_fallback,
     };
-    pub const CreateModuleOptions = struct {
+    pub const CreateCModuleOptions = struct {
         builder: *std.Build,
         include_path: []const u8,
         target: std.Build.ResolvedTarget,
@@ -29,7 +29,7 @@ pub fn includeHeadersFrom(pkg: anytype, to: *std.Build.Step.Compile) void {
     to.step.dependOn(p.step.*);
 }
 
-pub fn createModuleFrom(pkg: anytype, options: Package.CreateModuleOptions) *std.Build.Module {
+pub fn createCModuleFrom(pkg: anytype, options: Package.CreateCModuleOptions) *std.Build.Module {
     const p = tellme.that(&pkg, Package);
     const tc = options.builder.addTranslateC(.{
         .link_libc = options.link_libc,
@@ -56,11 +56,11 @@ pub fn linkLibraryFrom(pkg: anytype, to: *std.Build.Step.Compile, library: Packa
     to.step.dependOn(p.step.*);
 }
 
-pub fn linkLibrariesFrom(pkg: anytype, to: *std.Build.Step.Compile, libraries: []const Package.LinkOptions) void {
+pub fn linkLibrariesFrom(pkg: anytype, to: *std.Build.Module, libraries: []const Package.LinkOptions) void {
     const p = tellme.that(&pkg, Package);
     to.addLibraryPath(p.library_path.*);
     for (libraries) |library| {
-        to.linkSystemLibrary2(library.name, .{
+        to.linkSystemLibrary(library.name, .{
             .needed = library.needed,
             .weak = library.weak,
             .use_pkg_config = library.use_pkg_config,
@@ -71,12 +71,7 @@ pub fn linkLibrariesFrom(pkg: anytype, to: *std.Build.Step.Compile, libraries: [
     to.step.dependOn(p.step.*);
 }
 
-pub const PackagePathTag = enum {
-    lazy_path,
-    absolute,
-};
-
-pub const PackagePath = union(PackagePathTag) {
+pub const PackagePath = union(enum) {
     lazy_path: std.Build.LazyPath,
     absolute: []const u8,
 
